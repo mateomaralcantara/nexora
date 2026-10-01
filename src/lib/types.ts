@@ -29,6 +29,11 @@ export interface Property {
   parking_spaces?: number | null;
   area_m2?: number | null;
   lot_m2?: number | null;
+  land_tareas?: number | null;
+  construction_status?: "ready" | "under_construction" | "pre_sale" | null;
+  expected_delivery_date?: string | null;
+  animals_present?: boolean;
+  animals_description?: string | null;
   address?: string | null;
   sector?: string | null;
   city?: string | null;

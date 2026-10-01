@@ -32,6 +32,8 @@ create table if not exists public.properties (
   operation property_operation not null default 'sale', status property_status not null default 'draft', property_type text not null,
   price numeric(16,2) not null default 0, currency text not null default 'USD',
   bedrooms numeric(6,1), bathrooms numeric(6,1), parking_spaces integer, area_m2 numeric(12,2), lot_m2 numeric(12,2),
+  land_tareas numeric(12,2), construction_status text default 'ready', expected_delivery_date date,
+  animals_present boolean not null default false, animals_description text,
   address text, sector text, city text, province text, country text default 'República Dominicana',
   latitude numeric(10,7), longitude numeric(10,7), furnished boolean not null default false, pool boolean not null default false,
   featured boolean not null default false, amenities text[] not null default '{}', external_reference text, published_at timestamptz,

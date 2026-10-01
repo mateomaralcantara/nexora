@@ -17,6 +17,8 @@ export async function getPublicProperties(search?: string): Promise<Property[]> 
     return demoProperties.filter((item) => normalizeText([
       item.title, item.description, item.city, item.sector, item.province, item.property_type,
       item.operation, item.bedrooms, item.bathrooms, item.price,
+      item.land_tareas, item.lot_m2, item.construction_status,
+      item.animals_description,
     ].filter(Boolean).join(" ")).includes(needle));
   }
 
@@ -36,6 +38,7 @@ export async function getPublicProperties(search?: string): Promise<Property[]> 
       `sector.ilike.%${safe}%`,
       `province.ilike.%${safe}%`,
       `property_type.ilike.%${safe}%`,
+      `animals_description.ilike.%${safe}%`,
     ].join(","));
   }
 
