@@ -23,33 +23,33 @@ export default async function HomePage() {
   const features = [
     [
       Building2,
-      "Property Engine",
+      "Motor de Propiedades",
       "Inventario centralizado para venta, alquiler, renta corta y proyectos.",
     ],
     [
       Users,
       "CRM Inteligente",
-      "Leads, pipeline, scoring, agentes, seguimiento y actividad comercial.",
+      "Prospectos, embudo comercial, puntuación, agentes, seguimiento y actividad comercial.",
     ],
     [
       BrainCircuit,
-      "Nexora AI",
-      "Búsqueda conversacional, recomendaciones, scoring y valoración asistida.",
+      "Nexora IA",
+      "Búsqueda conversacional, recomendaciones, puntuación y valoración asistida.",
     ],
     [
       ChartNoAxesCombined,
-      "Analytics",
+      "Analítica",
       "Indicadores comerciales, inventario, oportunidades y conversión.",
     ],
     [
       Bot,
-      "Automation Ready",
-      "WhatsApp, email, webhooks y flujos comerciales automatizados.",
+      "Automatización Inteligente",
+      "WhatsApp, correo electrónico, integraciones y flujos comerciales automatizados.",
     ],
     [
       ShieldCheck,
-      "Multi-Tenant",
-      "Organizaciones aisladas mediante autenticación y Row Level Security.",
+      "Multiempresa",
+      "Organizaciones aisladas mediante autenticación y seguridad por filas.",
     ],
   ] as const;
 
@@ -73,7 +73,7 @@ export default async function HomePage() {
               <div className="mb-6 inline-flex items-center justify-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-400/10 px-4 py-2 text-sm font-bold text-cyan-300">
                 <Sparkles size={16} />
 
-                AI-Native Real Estate Operating System
+                Sistema Operativo Inmobiliario Nativo con IA
               </div>
 
               <h1 className="mx-auto text-center text-5xl font-black tracking-[-0.05em] text-white md:text-7xl lg:text-8xl">
@@ -85,8 +85,8 @@ export default async function HomePage() {
               </h1>
 
               <p className="mx-auto mt-7 max-w-3xl text-center text-lg leading-8 text-slate-400 md:text-xl">
-                Portal, propiedades, CRM, leads, proyectos,
-                operaciones, alquileres, comisiones, marketing,
+                Portal, propiedades, CRM, prospectos, proyectos,
+                operaciones, alquileres, comisiones, mercadeo,
                 analítica e inteligencia artificial.
               </p>
 
@@ -105,7 +105,7 @@ export default async function HomePage() {
                   href="/dashboard"
                   className="flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-6 py-4 font-bold text-white transition hover:bg-white/10"
                 >
-                  Abrir Nexora OS
+                  Abrir Nexora
                 </Link>
 
               </div>
@@ -126,7 +126,7 @@ export default async function HomePage() {
             <div className="mx-auto max-w-5xl text-center">
 
               <p className="text-center text-sm font-black uppercase tracking-[0.2em] text-cyan-400">
-                Nexora Intelligence
+                Inteligencia Nexora
               </p>
 
               <h2 className="mt-3 text-center text-3xl font-black text-white md:text-5xl">
@@ -197,7 +197,7 @@ export default async function HomePage() {
             <div className="mx-auto max-w-3xl text-center">
 
               <p className="text-sm font-black uppercase tracking-[0.2em] text-cyan-700">
-                Real Estate OS
+                Sistema Operativo Inmobiliario
               </p>
 
               <h2 className="mt-3 text-4xl font-black tracking-tight md:text-5xl">

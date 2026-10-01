@@ -65,7 +65,7 @@ export default async function ProjectsPage() {
         <section className="bg-slate-950 py-20 text-white">
           <div className="mx-auto max-w-7xl px-6">
             <p className="text-sm font-black uppercase tracking-[.2em] text-cyan-400">
-              Developer Hub
+              Centro de Proyectos
             </p>
 
             <h1 className="mt-3 max-w-4xl text-5xl font-black tracking-tight md:text-6xl">
