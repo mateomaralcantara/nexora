@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import type {
   ReactNode,
 } from "react";
@@ -32,6 +34,156 @@ import {
   formatCurrency,
 } from "@/lib/utils";
 
+
+const SITE_URL =
+  process.env.NEXT_PUBLIC_APP_URL?.startsWith(
+    "http",
+  )
+    ? process.env.NEXT_PUBLIC_APP_URL
+    : "https://monseo.icu";
+
+function getAbsoluteImageUrl(
+  image?: string | null,
+) {
+  try {
+    return new URL(
+      image ||
+        "/opengraph-image",
+      SITE_URL,
+    ).toString();
+  } catch {
+    return new URL(
+      "/opengraph-image",
+      SITE_URL,
+    ).toString();
+  }
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{
+    slug: string;
+  }>;
+}): Promise<Metadata> {
+  const {
+    slug,
+  } = await params;
+
+  const property =
+    await getPropertyBySlug(
+      slug,
+    );
+
+  if (!property) {
+    return {
+      title:
+        "Propiedad | Nexora Realty",
+    };
+  }
+
+  const sortedImages =
+    [
+      ...(
+        property.property_images ??
+        []
+      ),
+    ].sort(
+      (a, b) =>
+        (
+          a.position ??
+          0
+        ) -
+        (
+          b.position ??
+          0
+        ),
+    );
+
+  const mainImage =
+    getAbsoluteImageUrl(
+      sortedImages[0]?.url,
+    );
+
+  const location =
+    [
+      property.sector,
+      property.city,
+      property.province,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+  const description =
+    property.description
+      ?.trim()
+      .slice(0, 155) ||
+    `${property.property_type} disponible en ${location || "República Dominicana"}.`;
+
+  const propertyUrl =
+    `${SITE_URL}/properties/${slug}`;
+
+  return {
+    title:
+      property.title,
+
+    description,
+
+    alternates: {
+      canonical:
+        propertyUrl,
+    },
+
+    openGraph: {
+      type:
+        "website",
+
+      locale:
+        "es_DO",
+
+      siteName:
+        "Nexora Realty",
+
+      url:
+        propertyUrl,
+
+      title:
+        property.title,
+
+      description,
+
+      images: [
+        {
+          url:
+            mainImage,
+
+          width:
+            1200,
+
+          height:
+            630,
+
+          alt:
+            property.title,
+        },
+      ],
+    },
+
+    twitter: {
+      card:
+        "summary_large_image",
+
+      title:
+        property.title,
+
+      description,
+
+      images: [
+        mainImage,
+      ],
+    },
+  };
+}
 function Feature({
   icon,
   value,
