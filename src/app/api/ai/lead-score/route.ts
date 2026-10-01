@@ -1,0 +1,7 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { requireUser } from "@/lib/auth";
+import { getModel, getOpenAI } from "@/lib/ai";
+const schema=z.object({lead_id:z.string().uuid()});
+export async function POST(req:NextRequest){try{const a=await requireUser();const p=schema.safeParse(await req.json());if(!p.success)return NextResponse.json({error:"lead_id inválido"},{status:400});const {data:lead,error}=await a.supabase.from("leads").select("*,lead_events(*)").eq("id",p.data.lead_id).single();if(error||!lead)return NextResponse.json({error:"Lead no encontrado"},{status:404});let score=Number(lead.score||0);let reason="Scoring heurístico";const ai=getOpenAI();if(ai){const r=await ai.responses.create({model:getModel(),input:`Evalúa la intención comercial de este lead inmobiliario de 0 a 100. Devuelve SOLO JSON válido con {"score":numero,"reason":"texto corto"}. No inventes hechos. Datos: ${JSON.stringify(lead)}`});try{const parsed=JSON.parse(r.output_text);score=Math.max(0,Math.min(100,Number(parsed.score)||score));reason=String(parsed.reason||reason).slice(0,500);}catch{}}
+await a.supabase.from("leads").update({score}).eq("id",lead.id);await a.supabase.from("lead_events").insert({organization_id:a.organizationId,lead_id:lead.id,event_type:"ai_scored",metadata:{score,reason}});return NextResponse.json({score,reason});}catch(e){return NextResponse.json({error:e instanceof Error?e.message:"Error"},{status:500})}}

@@ -1,0 +1,5 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { requireUser } from "@/lib/auth";
+const schema=z.object({to:z.string().min(8).max(30),text:z.string().min(1).max(4096)});
+export async function POST(req:NextRequest){try{await requireUser();const p=schema.safeParse(await req.json());if(!p.success)return NextResponse.json({error:"Datos inválidos"},{status:400});const token=process.env.META_WHATSAPP_TOKEN,id=process.env.META_WHATSAPP_PHONE_NUMBER_ID,version=process.env.META_GRAPH_VERSION;if(!token||!id||!version)return NextResponse.json({error:"WhatsApp no configurado: token, phone number id y graph version son requeridos"},{status:503});const r=await fetch(`https://graph.facebook.com/${version}/${id}/messages`,{method:"POST",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},body:JSON.stringify({messaging_product:"whatsapp",to:p.data.to,type:"text",text:{body:p.data.text}})});const data=await r.json();return NextResponse.json(data,{status:r.ok?200:r.status});}catch(e){return NextResponse.json({error:e instanceof Error?e.message:"Error"},{status:500})}}

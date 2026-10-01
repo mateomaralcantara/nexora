@@ -1,0 +1,3 @@
+import { requireUser } from "@/lib/auth";
+import { AutopilotPanel } from "@/components/autopilot-panel";
+export default async function Page(){const {supabase}=await requireUser();const {data=[]}=await supabase.from("properties").select("id,title").in("status",["draft","published"]).order("created_at",{ascending:false});return <div><p className="text-sm font-black uppercase tracking-wider text-cyan-700">AI Automation</p><h1 className="mt-2 text-4xl font-black">Autopilot</h1><p className="mt-2 mb-8 max-w-2xl text-slate-500">Genera campañas multicanal y una acción comercial desde el inventario real, sin inventar datos del inmueble.</p><AutopilotPanel properties={data}/></div>}

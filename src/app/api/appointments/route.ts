@@ -1,0 +1,6 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { requireUser } from "@/lib/auth";
+const schema=z.object({scheduled_at:z.string(),duration_minutes:z.coerce.number().int().min(15).max(480).optional().default(60),notes:z.string().max(2000).optional(),lead_id:z.string().uuid().optional(),property_id:z.string().uuid().optional()});
+export async function GET(){try{const a=await requireUser();const {data,error}=await a.supabase.from("appointments").select("*").order("scheduled_at",{ascending:true});if(error)throw error;return NextResponse.json({appointments:data??[]});}catch(e){return NextResponse.json({error:e instanceof Error?e.message:"Error"},{status:500})}}
+export async function POST(req:NextRequest){try{const a=await requireUser();const p=schema.safeParse(await req.json());if(!p.success)return NextResponse.json({error:"Datos inválidos"},{status:400});const {data,error}=await a.supabase.from("appointments").insert({...p.data,organization_id:a.organizationId,agent_id:a.userId,status:"scheduled"}).select("*").single();if(error)throw error;return NextResponse.json({appointment:data},{status:201});}catch(e){return NextResponse.json({error:e instanceof Error?e.message:"Error"},{status:500})}}

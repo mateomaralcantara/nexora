@@ -1,0 +1,6 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { requireUser } from "@/lib/auth";
+import { getModel, getOpenAI } from "@/lib/ai";
+const schema=z.object({property_id:z.string().uuid(),channel:z.enum(["instagram","facebook","tiktok","youtube","email","whatsapp","web"])});
+export async function POST(req:NextRequest){try{const a=await requireUser();const p=schema.safeParse(await req.json());if(!p.success)return NextResponse.json({error:"Datos inválidos"},{status:400});const {data:property,error}=await a.supabase.from("properties").select("*").eq("id",p.data.property_id).single();if(error||!property)return NextResponse.json({error:"Propiedad no encontrada"},{status:404});const ai=getOpenAI();if(!ai)return NextResponse.json({error:"OPENAI_API_KEY no configurado"},{status:503});const r=await ai.responses.create({model:getModel(),input:`Genera copy inmobiliario profesional en español para ${p.data.channel}. Usa únicamente estos datos: ${JSON.stringify(property)}. No inventes amenidades, distancias, rentabilidad o permisos. Incluye CTA. Devuelve texto listo para publicar.`});return NextResponse.json({content:r.output_text});}catch(e){return NextResponse.json({error:e instanceof Error?e.message:"Error"},{status:500})}}

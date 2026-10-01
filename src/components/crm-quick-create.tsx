@@ -1,0 +1,9 @@
+"use client";
+import { FormEvent, useState } from "react";
+import { Plus, LoaderCircle } from "lucide-react";
+
+export function CRMQuickCreate({ endpoint, fields, title }: { endpoint:string; title:string; fields:{name:string;label:string;type?:string;required?:boolean;placeholder?:string}[] }) {
+  const [open,setOpen]=useState(false); const [loading,setLoading]=useState(false); const [message,setMessage]=useState("");
+  async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();setLoading(true);setMessage("");const f=new FormData(e.currentTarget);const payload=Object.fromEntries(fields.map(x=>[x.name,String(f.get(x.name)??"")]));try{const r=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});const d=await r.json();if(!r.ok)throw new Error(d.error||"No se pudo guardar.");window.location.reload();}catch(err){setMessage(err instanceof Error?err.message:"Error inesperado.");}finally{setLoading(false);}}
+  return <div><button onClick={()=>setOpen(v=>!v)} className="flex h-11 items-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-black text-white"><Plus size={16}/>{title}</button>{open&&<form onSubmit={submit} className="mt-4 grid gap-3 rounded-2xl border border-slate-200 bg-white p-5 md:grid-cols-2">{fields.map(field=><label key={field.name}><span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">{field.label}</span><input name={field.name} type={field.type||"text"} required={field.required} placeholder={field.placeholder} className="h-11 w-full rounded-xl border border-slate-200 px-3 outline-none focus:border-cyan-500"/></label>)}{message&&<p className="md:col-span-2 text-sm text-red-600">{message}</p>}<button disabled={loading} className="md:col-span-2 flex h-11 items-center justify-center gap-2 rounded-xl bg-cyan-500 font-black text-slate-950">{loading&&<LoaderCircle className="animate-spin" size={16}/>}Guardar</button></form>}</div>;
+}

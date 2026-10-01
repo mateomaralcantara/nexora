@@ -1,0 +1,5 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { requireUser } from "@/lib/auth";
+const schema=z.object({status:z.enum(["new","contacted","qualified","appointment","visit","offer","negotiation","won","lost"]).optional(),score:z.number().int().min(0).max(100).optional(),assigned_agent_id:z.string().uuid().nullable().optional(),notes:z.string().max(5000).optional()});
+export async function PATCH(req:NextRequest,{params}:{params:Promise<{id:string}>}){try{const {id}=await params;const auth=await requireUser();const p=schema.safeParse(await req.json());if(!p.success)return NextResponse.json({error:"Datos inválidos"},{status:400});const {data,error}=await auth.supabase.from("leads").update({...p.data,last_contact_at:new Date().toISOString()}).eq("id",id).eq("organization_id",auth.organizationId).select("*").single();if(error)throw error;return NextResponse.json({lead:data});}catch(e){return NextResponse.json({error:e instanceof Error?e.message:"Error"},{status:500})}}
