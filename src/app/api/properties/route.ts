@@ -3,119 +3,210 @@ import {
   NextResponse,
 } from "next/server";
 
-import { z } from "zod";
+import {
+  z,
+} from "zod";
 
-import { requireUser } from "@/lib/auth";
-import { slugify } from "@/lib/utils";
+import {
+  requireUser,
+} from "@/lib/auth";
 
-const schema = z.object({
-  title:
-    z.string().min(3).max(180),
+import {
+  slugify,
+} from "@/lib/utils";
 
-  description:
-    z.string().max(12000).optional().default(""),
+const VIDEO_ALT =
+  "__NEXORA_VIDEO__";
 
-  operation:
-    z.enum([
-      "sale",
-      "rent",
-      "short_rent",
-    ]),
+const schema =
+  z.object({
+    title:
+      z.string()
+        .min(3)
+        .max(180),
 
-  status:
-    z.enum([
-      "draft",
-      "published",
-    ]),
+    description:
+      z.string()
+        .max(12000)
+        .optional()
+        .default(""),
 
-  property_type:
-    z.string().min(2).max(80),
+    operation:
+      z.enum([
+        "sale",
+        "rent",
+        "short_rent",
+      ]),
 
-  price:
-    z.number().nonnegative(),
+    status:
+      z.enum([
+        "draft",
+        "published",
+        "reserved",
+        "sold",
+        "rented",
+        "archived",
+      ]),
 
-  currency:
-    z.string().length(3),
+    property_type:
+      z.string()
+        .min(2)
+        .max(80),
 
-  bedrooms:
-    z.number().nonnegative().optional(),
+    price:
+      z.number()
+        .nonnegative(),
 
-  bathrooms:
-    z.number().nonnegative().optional(),
+    currency:
+      z.string()
+        .length(3),
 
-  parking_spaces:
-    z.number().nonnegative().optional(),
+    bedrooms:
+      z.number()
+        .nonnegative()
+        .nullable()
+        .optional(),
 
-  area_m2:
-    z.number().nonnegative().optional(),
+    bathrooms:
+      z.number()
+        .nonnegative()
+        .nullable()
+        .optional(),
 
-  lot_m2:
-    z.number().nonnegative().optional(),
+    parking_spaces:
+      z.number()
+        .nonnegative()
+        .nullable()
+        .optional(),
 
-  land_tareas:
-    z.number().nonnegative().optional(),
+    area_m2:
+      z.number()
+        .nonnegative()
+        .nullable()
+        .optional(),
 
-  construction_status:
-    z.enum([
-      "ready",
-      "under_construction",
-      "pre_sale",
-    ]).optional(),
+    lot_m2:
+      z.number()
+        .nonnegative()
+        .nullable()
+        .optional(),
 
-  expected_delivery_date:
-    z.string().max(20).optional().or(
-      z.literal(""),
-    ),
+    land_tareas:
+      z.number()
+        .nonnegative()
+        .nullable()
+        .optional(),
 
-  animals_present:
-    z.boolean().optional().default(false),
+    construction_status:
+      z.enum([
+        "ready",
+        "under_construction",
+        "pre_sale",
+      ])
+        .optional(),
 
-  animals_description:
-    z.string().max(500).optional().default(""),
+    expected_delivery_date:
+      z.string()
+        .max(20)
+        .optional()
+        .or(
+          z.literal(""),
+        ),
 
-  sector:
-    z.string().max(120).optional(),
+    animals_present:
+      z.boolean()
+        .optional()
+        .default(false),
 
-  city:
-    z.string().max(120).optional(),
+    animals_description:
+      z.string()
+        .max(500)
+        .optional()
+        .default(""),
 
-  province:
-    z.string().max(120).optional(),
+    furnished:
+      z.boolean()
+        .optional()
+        .default(false),
 
-  country:
-    z.string().max(120).optional(),
+    pool:
+      z.boolean()
+        .optional()
+        .default(false),
 
-  image_url:
-    z.string().url().or(
-      z.literal(""),
-    ).optional(),
+    featured:
+      z.boolean()
+        .optional()
+        .default(false),
 
-  amenities:
-    z.array(
-      z.string().max(80),
-    ).max(50).optional(),
-});
+    sector:
+      z.string()
+        .max(120)
+        .optional(),
+
+    city:
+      z.string()
+        .max(120)
+        .optional(),
+
+    province:
+      z.string()
+        .max(120)
+        .optional(),
+
+    country:
+      z.string()
+        .max(120)
+        .optional(),
+
+    image_url:
+      z.string()
+        .url()
+        .or(
+          z.literal(""),
+        )
+        .optional(),
+
+    video_url:
+      z.string()
+        .url()
+        .or(
+          z.literal(""),
+        )
+        .optional(),
+
+    amenities:
+      z.array(
+        z.string()
+          .max(80),
+      )
+        .max(50)
+        .optional(),
+  });
 
 export async function GET() {
   try {
     const {
       supabase,
-    } = await requireUser();
+    } =
+      await requireUser();
 
     const {
       data,
       error,
-    } = await supabase
-      .from("properties")
-      .select(
-        "*,property_images(*)",
-      )
-      .order(
-        "created_at",
-        {
-          ascending: false,
-        },
-      );
+    } =
+      await supabase
+        .from("properties")
+        .select(
+          "*,property_images(*)",
+        )
+        .order(
+          "created_at",
+          {
+            ascending:
+              false,
+          },
+        );
 
     if (error) {
       throw error;
@@ -125,7 +216,6 @@ export async function GET() {
       properties:
         data ?? [],
     });
-
   } catch (error) {
     return NextResponse.json(
       {
@@ -142,7 +232,8 @@ export async function GET() {
 }
 
 export async function POST(
-  request: NextRequest,
+  request:
+    NextRequest,
 ) {
   try {
     const auth =
@@ -153,7 +244,9 @@ export async function POST(
         await request.json(),
       );
 
-    if (!parsed.success) {
+    if (
+      !parsed.success
+    ) {
       return NextResponse.json(
         {
           error:
@@ -172,8 +265,10 @@ export async function POST(
 
     const {
       image_url,
+      video_url,
       ...input
-    } = parsed.data;
+    } =
+      parsed.data;
 
     const slug =
       `${slugify(
@@ -183,65 +278,112 @@ export async function POST(
         .slice(-7)}`;
 
     const {
-      data: property,
+      data:
+        property,
       error,
-    } = await auth.supabase
-      .from("properties")
-      .insert({
-        ...input,
+    } =
+      await auth.supabase
+        .from("properties")
+        .insert({
+          ...input,
 
-        expected_delivery_date:
-          input.expected_delivery_date ||
-          null,
+          expected_delivery_date:
+            input.expected_delivery_date ||
+            null,
 
-        animals_description:
-          input.animals_present
-            ? input.animals_description
-            : "",
+          animals_description:
+            input.animals_present
+              ? input.animals_description
+              : "",
 
-        organization_id:
-          auth.organizationId,
+          organization_id:
+            auth.organizationId,
 
-        agent_id:
-          auth.userId,
+          agent_id:
+            auth.userId,
 
-        slug,
+          slug,
 
-        published_at:
-          input.status === "published"
-            ? new Date().toISOString()
-            : null,
-      })
-      .select("*")
-      .single();
+          published_at:
+            input.status ===
+            "published"
+              ? new Date()
+                  .toISOString()
+              : null,
+        })
+        .select("*")
+        .single();
 
     if (error) {
       throw error;
     }
 
-    // Compatibilidad con el formulario anterior
+    const mediaRows:
+      {
+        organization_id:
+          string;
+        property_id:
+          string;
+        url:
+          string;
+        alt_text?:
+          string;
+        position:
+          number;
+      }[] = [];
+
     if (image_url) {
+      mediaRows.push({
+        organization_id:
+          auth.organizationId,
+
+        property_id:
+          property.id,
+
+        url:
+          image_url,
+
+        position:
+          0,
+      });
+    }
+
+    if (video_url) {
+      mediaRows.push({
+        organization_id:
+          auth.organizationId,
+
+        property_id:
+          property.id,
+
+        url:
+          video_url,
+
+        alt_text:
+          VIDEO_ALT,
+
+        position:
+          99,
+      });
+    }
+
+    if (
+      mediaRows.length
+    ) {
       const {
-        error: imageError,
-      } = await auth.supabase
-        .from("property_images")
-        .insert({
-          organization_id:
-            auth.organizationId,
+        error:
+          mediaError,
+      } =
+        await auth.supabase
+          .from(
+            "property_images",
+          )
+          .insert(
+            mediaRows,
+          );
 
-          property_id:
-            property.id,
-
-          url:
-            image_url,
-
-          position: 0,
-        });
-
-      if (imageError) {
-        console.error(
-          imageError.message,
-        );
+      if (mediaError) {
+        throw mediaError;
       }
     }
 
@@ -253,7 +395,6 @@ export async function POST(
         status: 201,
       },
     );
-
   } catch (error) {
     const message =
       error instanceof Error
@@ -262,11 +403,13 @@ export async function POST(
 
     return NextResponse.json(
       {
-        error: message,
+        error:
+          message,
       },
       {
         status:
-          message === "UNAUTHORIZED"
+          message ===
+          "UNAUTHORIZED"
             ? 401
             : 500,
       },

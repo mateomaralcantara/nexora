@@ -1,4 +1,6 @@
-import type { Metadata } from "next";
+import type {
+  Metadata,
+} from "next";
 
 import type {
   ReactNode,
@@ -9,8 +11,10 @@ import {
   BedDouble,
   CalendarDays,
   CarFront,
+  ExternalLink,
   MapPin,
   PawPrint,
+  Play,
   Ruler,
 } from "lucide-react";
 
@@ -34,6 +38,8 @@ import {
   formatCurrency,
 } from "@/lib/utils";
 
+const VIDEO_ALT =
+  "__NEXORA_VIDEO__";
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_APP_URL?.startsWith(
@@ -43,7 +49,8 @@ const SITE_URL =
     : "https://monseo.icu";
 
 function getAbsoluteImageUrl(
-  image?: string | null,
+  image?:
+    string | null,
 ) {
   try {
     return new URL(
@@ -59,16 +66,157 @@ function getAbsoluteImageUrl(
   }
 }
 
+function getVideoPlayer(
+  value:
+    string,
+) {
+  try {
+    const url =
+      new URL(
+        value,
+      );
+
+    const host =
+      url.hostname
+        .replace(
+          "www.",
+          "",
+        )
+        .toLowerCase();
+
+    if (
+      host ===
+      "youtu.be"
+    ) {
+      const id =
+        url.pathname
+          .replace(
+            /^\//,
+            "",
+          )
+          .split("/")[0];
+
+      if (id) {
+        return {
+          kind:
+            "embed" as const,
+          src:
+            `https://www.youtube.com/embed/${id}`,
+        };
+      }
+    }
+
+    if (
+      host.endsWith(
+        "youtube.com",
+      )
+    ) {
+      let id =
+        url.searchParams.get(
+          "v",
+        );
+
+      if (
+        !id &&
+        url.pathname.startsWith(
+          "/shorts/",
+        )
+      ) {
+        id =
+          url.pathname
+            .split(
+              "/",
+            )[2] ??
+          null;
+      }
+
+      if (
+        !id &&
+        url.pathname.startsWith(
+          "/embed/",
+        )
+      ) {
+        id =
+          url.pathname
+            .split(
+              "/",
+            )[2] ??
+          null;
+      }
+
+      if (id) {
+        return {
+          kind:
+            "embed" as const,
+          src:
+            `https://www.youtube.com/embed/${id}`,
+        };
+      }
+    }
+
+    if (
+      host.endsWith(
+        "vimeo.com",
+      )
+    ) {
+      const id =
+        url.pathname
+          .split("/")
+          .filter(Boolean)
+          .find(
+            (part) =>
+              /^\d+$/.test(
+                part,
+              ),
+          );
+
+      if (id) {
+        return {
+          kind:
+            "embed" as const,
+          src:
+            `https://player.vimeo.com/video/${id}`,
+        };
+      }
+    }
+
+    if (
+      /\.(mp4|webm|ogg)$/i.test(
+        url.pathname,
+      )
+    ) {
+      return {
+        kind:
+          "video" as const,
+        src:
+          url.toString(),
+      };
+    }
+
+    return {
+      kind:
+        "link" as const,
+      src:
+        url.toString(),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{
-    slug: string;
-  }>;
+  params:
+    Promise<{
+      slug:
+        string;
+    }>;
 }): Promise<Metadata> {
   const {
     slug,
-  } = await params;
+  } =
+    await params;
 
   const property =
     await getPropertyBySlug(
@@ -88,17 +236,17 @@ export async function generateMetadata({
         property.property_images ??
         []
       ),
-    ].sort(
-      (a, b) =>
-        (
-          a.position ??
-          0
-        ) -
-        (
-          b.position ??
-          0
-        ),
-    );
+    ]
+      .filter(
+        (image) =>
+          image.alt_text !==
+          VIDEO_ALT,
+      )
+      .sort(
+        (a, b) =>
+          (a.position ?? 0) -
+          (b.position ?? 0),
+      );
 
   const mainImage =
     getAbsoluteImageUrl(
@@ -117,7 +265,10 @@ export async function generateMetadata({
   const description =
     property.description
       ?.trim()
-      .slice(0, 155) ||
+      .slice(
+        0,
+        155,
+      ) ||
     `${property.property_type} disponible en ${location || "República Dominicana"}.`;
 
   const propertyUrl =
@@ -184,12 +335,15 @@ export async function generateMetadata({
     },
   };
 }
+
 function Feature({
   icon,
   value,
 }: {
-  icon: ReactNode;
-  value: string;
+  icon:
+    ReactNode;
+  value:
+    string;
 }) {
   return (
     <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700">
@@ -202,13 +356,16 @@ function Feature({
 export default async function PropertyPage({
   params,
 }: {
-  params: Promise<{
-    slug: string;
-  }>;
+  params:
+    Promise<{
+      slug:
+        string;
+    }>;
 }) {
   const {
     slug,
-  } = await params;
+  } =
+    await params;
 
   const property =
     await getPropertyBySlug(
@@ -219,40 +376,61 @@ export default async function PropertyPage({
     notFound();
   }
 
+  const allMedia =
+    property.property_images ??
+    [];
+
+  const videoUrl =
+    allMedia.find(
+      (media) =>
+        media.alt_text ===
+        VIDEO_ALT,
+    )?.url ??
+    null;
+
+  const video =
+    videoUrl
+      ? getVideoPlayer(
+          videoUrl,
+        )
+      : null;
+
   const images =
     [
-      ...(
-        property.property_images ??
-        []
-      ),
+      ...allMedia,
     ]
+      .filter(
+        (image) =>
+          image.alt_text !==
+          VIDEO_ALT,
+      )
       .sort(
         (a, b) =>
-          (
-            a.position ??
-            0
-          ) -
-          (
-            b.position ??
-            0
-          ),
+          (a.position ?? 0) -
+          (b.position ?? 0),
       )
-      .slice(0, 6);
+      .slice(
+        0,
+        6,
+      );
 
   const mainImage =
     images[0]?.url ??
     "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=80";
 
   const extraImages =
-    images.slice(1);
+    images.slice(
+      1,
+    );
 
-  const location = [
-    property.sector,
-    property.city,
-    property.province,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  const location =
+    [
+      property.sector,
+      property.city,
+      property.province,
+    ]
+      .filter(Boolean)
+      .join(", ");
 
   const operationLabel =
     property.operation ===
@@ -277,16 +455,20 @@ export default async function PropertyPage({
       <Navbar />
 
       <main className="min-h-screen bg-slate-50">
-
         <div className="h-[52vh] min-h-[420px] bg-slate-900">
           <img
-            src={mainImage}
-            alt={property.title}
+            src={
+              mainImage
+            }
+            alt={
+              property.title
+            }
             className="h-full w-full object-cover"
           />
         </div>
 
-        {extraImages.length > 0 && (
+        {extraImages.length >
+        0 ? (
           <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 px-6 pt-6 md:grid-cols-5">
             {extraImages.map(
               (
@@ -311,112 +493,176 @@ export default async function PropertyPage({
               ),
             )}
           </div>
-        )}
+        ) : null}
+
+        {video ? (
+          <section className="mx-auto max-w-7xl px-6 pt-8">
+            <div className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-950 shadow-sm">
+              <div className="flex items-center gap-3 border-b border-white/10 px-6 py-4 text-white">
+                <span className="grid h-10 w-10 place-items-center rounded-xl bg-violet-500">
+                  <Play size={19} />
+                </span>
+
+                <div>
+                  <p className="font-black">
+                    Video de la propiedad
+                  </p>
+
+                  <p className="text-xs text-slate-400">
+                    Recorrido o presentación audiovisual
+                  </p>
+                </div>
+              </div>
+
+              {video.kind ===
+              "embed" ? (
+                <div className="aspect-video">
+                  <iframe
+                    src={
+                      video.src
+                    }
+                    title={`Video - ${property.title}`}
+                    className="h-full w-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  />
+                </div>
+              ) : video.kind ===
+                "video" ? (
+                <video
+                  src={
+                    video.src
+                  }
+                  controls
+                  playsInline
+                  className="aspect-video w-full bg-black"
+                />
+              ) : (
+                <div className="p-8 text-center">
+                  <a
+                    href={
+                      video.src
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 rounded-xl bg-violet-500 px-5 py-3 font-black text-white"
+                  >
+                    <ExternalLink size={17} />
+                    Ver video
+                  </a>
+                </div>
+              )}
+            </div>
+          </section>
+        ) : null}
 
         <div className="mx-auto grid max-w-7xl gap-10 px-6 py-12 lg:grid-cols-[1fr_380px]">
-
           <section>
-
             <div className="flex flex-wrap gap-2">
-
               <span className="rounded-full bg-slate-950 px-3 py-1.5 text-xs font-black uppercase text-white">
                 {operationLabel}
               </span>
 
               <span className="rounded-full bg-cyan-100 px-3 py-1.5 text-xs font-black uppercase text-cyan-900">
-                {property.property_type}
+                {
+                  property.property_type
+                }
               </span>
 
               {property.construction_status &&
-                property.construction_status !==
-                  "ready" && (
-                  <span className="rounded-full bg-amber-100 px-3 py-1.5 text-xs font-black uppercase text-amber-900">
-                    {constructionLabel}
-                  </span>
-                )}
+              property.construction_status !==
+                "ready" ? (
+                <span className="rounded-full bg-amber-100 px-3 py-1.5 text-xs font-black uppercase text-amber-900">
+                  {
+                    constructionLabel
+                  }
+                </span>
+              ) : null}
             </div>
 
             <h1 className="mt-5 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
-              {property.title}
+              {
+                property.title
+              }
             </h1>
 
             <div className="mt-4 flex items-center gap-2 text-slate-500">
               <MapPin size={19} />
-
               {location ||
                 "Ubicación no especificada"}
             </div>
 
             <p className="mt-6 text-4xl font-black text-cyan-700">
-              {formatCurrency(
-                property.price,
-                property.currency,
-              )}
+              {property.price > 0
+                ? formatCurrency(
+                    property.price,
+                    property.currency,
+                  )
+                : "Precio a consultar"}
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">
-
-              {(property.bedrooms ?? 0) >
-                0 && (
+              {(property.bedrooms ??
+                0) > 0 ? (
                 <Feature
                   icon={
                     <BedDouble />
                   }
                   value={`${property.bedrooms} habitaciones`}
                 />
-              )}
+              ) : null}
 
-              {(property.bathrooms ?? 0) >
-                0 && (
+              {(property.bathrooms ??
+                0) > 0 ? (
                 <Feature
                   icon={
                     <Bath />
                   }
                   value={`${property.bathrooms} baños`}
                 />
-              )}
+              ) : null}
 
               {(property.parking_spaces ??
-                0) > 0 && (
+                0) > 0 ? (
                 <Feature
                   icon={
                     <CarFront />
                   }
                   value={`${property.parking_spaces} parqueos`}
                 />
-              )}
+              ) : null}
 
               {(property.area_m2 ??
-                0) > 0 && (
+                0) > 0 ? (
                 <Feature
                   icon={
                     <Ruler />
                   }
                   value={`${property.area_m2} m² construidos`}
                 />
-              )}
+              ) : null}
 
               {(property.lot_m2 ??
-                0) > 0 && (
+                0) > 0 ? (
                 <Feature
                   icon={
                     <Ruler />
                   }
                   value={`${property.lot_m2} m² de terreno`}
                 />
-              )}
+              ) : null}
 
               {(property.land_tareas ??
-                0) > 0 && (
+                0) > 0 ? (
                 <Feature
                   icon={
                     <Ruler />
                   }
                   value={`${property.land_tareas} tareas`}
                 />
-              )}
+              ) : null}
 
-              {property.expected_delivery_date && (
+              {property.expected_delivery_date ? (
                 <Feature
                   icon={
                     <CalendarDays />
@@ -437,11 +683,10 @@ export default async function PropertyPage({
                     ),
                   )}`}
                 />
-              )}
-
+              ) : null}
             </div>
 
-            {property.animals_present && (
+            {property.animals_present ? (
               <div className="mt-8 rounded-3xl border border-emerald-200 bg-emerald-50 p-6">
                 <div className="flex items-center gap-3">
                   <div className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-900 text-white">
@@ -460,7 +705,7 @@ export default async function PropertyPage({
                   </div>
                 </div>
               </div>
-            )}
+            ) : null}
 
             <div className="mt-10 rounded-3xl bg-white p-7 shadow-sm">
               <h2 className="text-2xl font-black">
@@ -475,9 +720,7 @@ export default async function PropertyPage({
               {property.amenities?.length ? (
                 <div className="mt-7 flex flex-wrap gap-2">
                   {property.amenities.map(
-                    (
-                      amenity,
-                    ) => (
+                    (amenity) => (
                       <span
                         key={
                           amenity
@@ -516,7 +759,6 @@ export default async function PropertyPage({
               />
             )}
           </aside>
-
         </div>
       </main>
     </>

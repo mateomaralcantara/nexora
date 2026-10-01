@@ -3,13 +3,23 @@ import {
   NextResponse,
 } from "next/server";
 
-import { requireUser } from "@/lib/auth";
-import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  requireUser,
+} from "@/lib/auth";
 
-export const runtime = "nodejs";
+import {
+  createAdminClient,
+} from "@/lib/supabase/admin";
+
+export const runtime =
+  "nodejs";
+
+const VIDEO_ALT =
+  "__NEXORA_VIDEO__";
 
 export async function POST(
-  request: NextRequest,
+  request:
+    NextRequest,
 ) {
   try {
     const auth =
@@ -23,27 +33,24 @@ export async function POST(
 
     const propertyId =
       String(
-        form.get("property_id") ??
-        "",
+        form.get(
+          "property_id",
+        ) ?? "",
       );
 
     const rawPosition =
       Number(
-        form.get("position") ?? 0,
+        form.get(
+          "position",
+        ) ?? 0,
       );
 
-    const position =
-      Math.min(
-        5,
-        Math.max(
-          0,
-          Number.isFinite(rawPosition)
-            ? rawPosition
-            : 0,
-        ),
-      );
-
-    if (!(file instanceof File)) {
+    if (
+      !(
+        file instanceof
+        File
+      )
+    ) {
       return NextResponse.json(
         {
           error:
@@ -57,7 +64,9 @@ export async function POST(
 
     if (
       file.size >
-      15 * 1024 * 1024
+      15 *
+        1024 *
+        1024
     ) {
       return NextResponse.json(
         {
@@ -86,19 +95,36 @@ export async function POST(
       );
     }
 
+    let position =
+      Math.min(
+        5,
+        Math.max(
+          0,
+          Number.isFinite(
+            rawPosition,
+          )
+            ? rawPosition
+            : 0,
+        ),
+      );
+
     if (propertyId) {
       const {
-        data: ownedProperty,
-      } = await auth.supabase
-        .from("properties")
-        .select("id")
-        .eq(
-          "id",
-          propertyId,
-        )
-        .maybeSingle();
+        data:
+          ownedProperty,
+      } =
+        await auth.supabase
+          .from("properties")
+          .select("id")
+          .eq(
+            "id",
+            propertyId,
+          )
+          .maybeSingle();
 
-      if (!ownedProperty) {
+      if (
+        !ownedProperty
+      ) {
         return NextResponse.json(
           {
             error:
@@ -108,6 +134,93 @@ export async function POST(
             status: 403,
           },
         );
+      }
+
+      const {
+        data:
+          existingMedia,
+        error:
+          existingError,
+      } =
+        await auth.supabase
+          .from(
+            "property_images",
+          )
+          .select(
+            "id,alt_text,position",
+          )
+          .eq(
+            "property_id",
+            propertyId,
+          );
+
+      if (
+        existingError
+      ) {
+        throw existingError;
+      }
+
+      const images =
+        (
+          existingMedia ??
+          []
+        ).filter(
+          (item) =>
+            item.alt_text !==
+            VIDEO_ALT,
+        );
+
+      if (
+        images.length >=
+        6
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Esta propiedad ya tiene el máximo de 6 fotos.",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      const used =
+        new Set(
+          images.map(
+            (item) =>
+              item.position ??
+              0,
+          ),
+        );
+
+      if (
+        used.has(
+          position,
+        )
+      ) {
+        const free =
+          [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+          ].find(
+            (value) =>
+              !used.has(
+                value,
+              ),
+          );
+
+        if (
+          free !==
+          undefined
+        ) {
+          position =
+            free;
+        }
       }
     }
 
@@ -141,20 +254,22 @@ export async function POST(
 
     const {
       error,
-    } = await admin.storage
-      .from(
-        "property-media",
-      )
-      .upload(
-        path,
-        await file.arrayBuffer(),
-        {
-          contentType:
-            file.type,
+    } =
+      await admin.storage
+        .from(
+          "property-media",
+        )
+        .upload(
+          path,
+          await file.arrayBuffer(),
+          {
+            contentType:
+              file.type,
 
-          upsert: false,
-        },
-      );
+            upsert:
+              false,
+          },
+        );
 
     if (error) {
       throw error;
@@ -162,35 +277,40 @@ export async function POST(
 
     const {
       data,
-    } = admin.storage
-      .from(
-        "property-media",
-      )
-      .getPublicUrl(
-        path,
-      );
+    } =
+      admin.storage
+        .from(
+          "property-media",
+        )
+        .getPublicUrl(
+          path,
+        );
 
     if (propertyId) {
       const {
-        error: imageError,
-      } = await admin
-        .from(
-          "property_images",
-        )
-        .insert({
-          organization_id:
-            auth.organizationId,
+        error:
+          imageError,
+      } =
+        await admin
+          .from(
+            "property_images",
+          )
+          .insert({
+            organization_id:
+              auth.organizationId,
 
-          property_id:
-            propertyId,
+            property_id:
+              propertyId,
 
-          url:
-            data.publicUrl,
+            url:
+              data.publicUrl,
 
-          position,
-        });
+            position,
+          });
 
-      if (imageError) {
+      if (
+        imageError
+      ) {
         throw imageError;
       }
     }
@@ -203,7 +323,6 @@ export async function POST(
 
       position,
     });
-
   } catch (error) {
     return NextResponse.json(
       {
